@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 
-// Allow if the Referer contains ANY of these tokens (covers default + custom LW domains)
+// Allow if the referer contains ANY of these tokens
 const ALLOWED_TOKENS = [
-  'learnworlds.com',                 // covers many LW subdomains/editors
-  'therebuild100.learnworlds.com',   // your default LW domain
-  'learn.therebuild100.com'          // your custom LW domain (if/when you set it)
+  'therebuild100.com',               // covers www.therebuild100.com + learn.therebuild100.com
+  'learnworlds.com'                  // covers default LearnWorlds subdomains
 ];
 
-// Public assets that should pass without a gate
+// Public assets that always pass
 const ALWAYS_ALLOW_PREFIXES = [
   '/access.html','/robots.txt','/favicon.ico','/manifest.webmanifest',
   '/apple-touch-icon.png','/.well-known/','/_next/',
@@ -24,24 +23,17 @@ export default function middleware(req: Request) {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  // Let static assets through
-  if (ALWAYS_ALLOW_PREFIXES.some(p => path.startsWith(p))) {
-    return NextResponse.next();
-  }
+  // Skip gate for assets
+  if (ALWAYS_ALLOW_PREFIXES.some(p => path.startsWith(p))) return NextResponse.next();
 
-  // Allow only if Referer contains any allowed token
   const referer = req.headers.get('referer') || '';
   const allowed = referer && ALLOWED_TOKENS.some(t => referer.includes(t));
 
-  if (!allowed) {
-    // Show the friendly access page
-    return NextResponse.rewrite(new URL('/access.html', url));
-  }
+  // Block if referer not allowed
+  if (!allowed) return NextResponse.rewrite(new URL('/access.html', url));
 
-  // If lesson points to "/", rewrite it to the static reader
-  if (path === '/' || path === '') {
-    return NextResponse.rewrite(new URL('/index.html', url));
-  }
+  // Rewrite root "/" to the static reader file
+  if (path === '/' || path === '') return NextResponse.rewrite(new URL('/index.html', url));
 
   return NextResponse.next();
 }
