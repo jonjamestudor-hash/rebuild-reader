@@ -1,6 +1,6 @@
 var config = {
   "kotobee": {
-    "mode": "local",
+    "mode": "standalone",
     "liburl": "",
     "cloudid": ""
   },
