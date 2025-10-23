@@ -23,38 +23,56 @@
     animation: rbmFadeIn 1ms linear 250ms forwards; /* adjust delay if needed */
   }
   @keyframes rbmFadeIn { to { opacity: 1; } }
-<style type="text/css" user>
-  /* RBM: force full justification inside the reader content only */
-  /* cast a wide net across Kotobee containers */
-  #kotobeeVue .page p,
-  #kotobeeVue .page li,
-  #kotobeeVue [data-page] p,
-  #kotobeeVue [data-page] li,
-  #kotobee .page p,
-  #kotobee .page li,
-  .kb-reader .page p,
-  .kb-reader .page li,
-  .kb-chapter p,
-  .kb-chapter li,
-  .chapter p,
-  .chapter li,
-  .content p,
-  .content li {
-    text-align: justify !important;
-    text-justify: inter-word;
-    -webkit-hyphens: auto;
-    -ms-hyphens: auto;
-    hyphens: auto;
+<!-- RBM: force full justification inside reader content (handles inner iframes) -->
+<script>
+(function () {
+  // The CSS we want inside page documents
+  const JUSTIFY_CSS = `
+    /* paragraphs and list items */
+    p, li {
+      text-align: justify !important;
+      text-justify: inter-word;
+      -webkit-hyphens: auto;
+      -ms-hyphens: auto;
+      hyphens: auto;
+    }
+    /* keep headings left-aligned */
+    h1, h2, h3, h4 { text-align: left !important; }
+  `;
+
+  function injectInto(doc) {
+    try {
+      if (!doc || !doc.head) return;
+      if (doc.getElementById('rbm-justify-injected')) return;
+      const style = doc.createElement('style');
+      style.id = 'rbm-justify-injected';
+      style.type = 'text/css';
+      style.appendChild(doc.createTextNode(JUSTIFY_CSS));
+      doc.head.appendChild(style);
+    } catch (e) { /* cross-origin or not ready; ignore */ }
   }
 
-  /* Keep headings left-aligned so they don’t look stretched */
-  #kotobeeVue .page h1,
-  #kotobeeVue .page h2,
-  #kotobeeVue .page h3,
-  #kotobeeVue .page h4 {
-    text-align: left !important;
+  function scanAll() {
+    // top-level (shell) — harmless if no matching nodes
+    injectInto(document);
+
+    // try to inject into any same-origin iframes Kotobee uses for pages
+    document.querySelectorAll('iframe').forEach(ifr => {
+      try {
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d) injectInto(d);
+      } catch (e) { /* cross-origin frame: skip */ }
+    });
   }
-</style>
+
+  // initial pass + keep watching for new page iframes as chapters load
+  scanAll();
+  window.addEventListener('load', scanAll);
+  const obs = new MutationObserver(scanAll);
+  obs.observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>
+
 
 
 </script>
