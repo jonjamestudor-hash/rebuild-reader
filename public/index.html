@@ -23,19 +23,31 @@
     animation: rbmFadeIn 1ms linear 250ms forwards; /* adjust delay if needed */
   }
   @keyframes rbmFadeIn { to { opacity: 1; } }
-</style>
-  <!-- RBM: force full justification for flowing content -->
-<style id="rbm-justify">
-  /* Paragraphs & list items inside reader pages */
+<style type="text/css" user>
+  /* RBM: force full justification inside the reader content only */
+  /* cast a wide net across Kotobee containers */
   #kotobeeVue .page p,
-  #kotobeeVue .page li {
+  #kotobeeVue .page li,
+  #kotobeeVue [data-page] p,
+  #kotobeeVue [data-page] li,
+  #kotobee .page p,
+  #kotobee .page li,
+  .kb-reader .page p,
+  .kb-reader .page li,
+  .kb-chapter p,
+  .kb-chapter li,
+  .chapter p,
+  .chapter li,
+  .content p,
+  .content li {
     text-align: justify !important;
     text-justify: inter-word;
     -webkit-hyphens: auto;
     -ms-hyphens: auto;
     hyphens: auto;
   }
-  /* Optional: keep headings not justified (comment out if you want them justified too) */
+
+  /* Keep headings left-aligned so they don’t look stretched */
   #kotobeeVue .page h1,
   #kotobeeVue .page h2,
   #kotobeeVue .page h3,
@@ -43,6 +55,7 @@
     text-align: left !important;
   }
 </style>
+
 
 </script>
 </head><body id="kotobee" ng-controller="GlobalCtrl" ng-init="init()" ng-class="(mobile?'mobile':'web')" animation="slide-left-right-ios7"><script>if(config.noLoadingScreen)
